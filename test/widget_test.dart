@@ -5,26 +5,40 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
+import 'package:duolingo/core/data_source/language_data_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:duolingo/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
+  group('LanguageLocalDataSource Tests', () {
+    late LanguageDataSource dataSource;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    setUp(() {
+      dataSource = LanguageDataSource();
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('should load and decode bulu_data.json correctly', () async {
+      // 1. Act
+      // Ensure the file is in assets/data/bulu_data.json
+      final result = await dataSource.loadLanguageJson('bulu');
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      // 2. Assert
+      expect(result.isSuccess(), true);
+      result.fold(
+        (data) {
+          expect(data, isA<List<dynamic>>());
+          expect(data.first['id'], 'alp-01');
+        },
+        (error) => fail('Should not have failed: $error'),
+      );
+    });
+
+    test('should throw an exception if file is missing', () async {
+      // Act
+      final result = await dataSource.loadLanguageJson('non_existent');
+
+      // Assert
+      expect(result.isError(), true);
+    });
   });
 }
