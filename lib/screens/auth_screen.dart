@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../utils/color_alpha.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import '../models/language_data.dart';
-import 'main_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -86,7 +86,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.alphaFactor(0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -248,7 +248,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.alphaFactor(0.9),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextFormField(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../services/firebase_service.dart';
+import '../utils/color_alpha.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -29,7 +30,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         });
       }
     } catch (e) {
-      print('Error loading leaderboard: $e');
+      debugPrint('Error loading leaderboard: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -126,15 +127,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF58CC02).withOpacity(0.1),
-            const Color(0xFF58CC02).withOpacity(0.05),
+            const Color(0xFF58CC02).alphaFactor(0.1),
+            const Color(0xFF58CC02).alphaFactor(0.05),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF58CC02).withOpacity(0.2),
+          color: const Color(0xFF58CC02).alphaFactor(0.2),
         ),
       ),
       child: Column(
@@ -172,7 +173,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.alphaFactor(0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -247,7 +248,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.alphaFactor(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -261,7 +262,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           decoration: BoxDecoration(
             color: rank <= 3 
                 ? _getMedalColor(rank)
-                : const Color(0xFF58CC02).withOpacity(0.1),
+                : const Color(0xFF58CC02).alphaFactor(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Center(

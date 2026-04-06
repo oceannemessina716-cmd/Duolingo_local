@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/color_alpha.dart';
 import '../models/language_data.dart';
 
 class SkillTreeWidget extends StatelessWidget {
@@ -22,7 +24,7 @@ class SkillTreeWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.alphaFactor(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -67,13 +69,13 @@ class SkillTreeWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isUnlocked 
-              ? skill.color.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.1),
+              ? skill.color.alphaFactor(0.1)
+              : Colors.grey.alphaFactor(0.1),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isUnlocked 
-                ? skill.color.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.3),
+                ? skill.color.alphaFactor(0.3)
+                : Colors.grey.alphaFactor(0.3),
             width: 2,
           ),
         ),
@@ -87,7 +89,7 @@ class SkillTreeWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: (isUnlocked ? skill.color : Colors.grey).withOpacity(0.3),
+                    color: (isUnlocked ? skill.color : Colors.grey).alphaFactor(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -123,7 +125,7 @@ class SkillTreeWidget extends StatelessWidget {
               Container(
                 height: 6,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.alphaFactor(0.2),
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: FractionallySizedBox(

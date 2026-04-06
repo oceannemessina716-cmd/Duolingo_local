@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/color_alpha.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 
@@ -14,7 +16,7 @@ class StreakWidget extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.2),
+            color: Colors.orange.alphaFactor(0.2),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(

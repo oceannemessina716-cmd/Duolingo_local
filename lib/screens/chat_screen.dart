@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../utils/color_alpha.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../services/gemini_service.dart';
-import '../models/language_data.dart';
+import '../models/language_data.dart' as models;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -14,7 +16,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
-  Language _selectedLanguage = Language.bulu;
+  models.Language _selectedLanguage = models.Language.bulu;
 
   @override
   void initState() {
@@ -30,11 +32,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _addWelcomeMessage() {
     setState(() {
-      _messages.add(ChatMessage(
-        text: 'Bonjour ! Je suis votre assistant pour l\'apprentissage des langues camerounaises. Comment puis-je vous aider aujourd\'hui ?',
-        isUser: false,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(
+          text:
+              'Bonjour ! Je suis votre assistant pour l\'apprentissage des langues camerounaises. Comment puis-je vous aider aujourd\'hui ?',
+          isUser: false,
+          timestamp: DateTime.now(),
+        ),
+      );
     });
   }
 
@@ -43,11 +48,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (message.isEmpty) return;
 
     setState(() {
-      _messages.add(ChatMessage(
-        text: message,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(text: message, isUser: true, timestamp: DateTime.now()),
+      );
       _isLoading = true;
     });
 
@@ -62,22 +65,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(
-            text: response,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
+          _messages.add(
+            ChatMessage(
+              text: response,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(
-            text: 'Désolé, une erreur est survenue. Veuillez réessayer.',
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
+          _messages.add(
+            ChatMessage(
+              text: 'Désolé, une erreur est survenue. Veuillez réessayer.',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
           _isLoading = false;
         });
       }
@@ -93,15 +100,12 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         title: const Text(
           'Assistant IA',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
-          PopupMenuButton<Language>(
+          PopupMenuButton<models.Language>(
             icon: const Icon(Icons.language, color: Colors.white),
-            onSelected: (Language language) {
+            onSelected: (models.Language language) {
               setState(() {
                 _selectedLanguage = language;
               });
@@ -109,15 +113,15 @@ class _ChatScreenState extends State<ChatScreen> {
             itemBuilder: (BuildContext context) {
               return [
                 const PopupMenuItem(
-                  value: Language.bulu,
+                  value: models.Language.bulu,
                   child: Text('Bulu'),
                 ),
                 const PopupMenuItem(
-                  value: Language.bassaa,
+                  value: models.Language.bassaa,
                   child: Text('Bassaa'),
                 ),
                 const PopupMenuItem(
-                  value: Language.bamileke,
+                  value: models.Language.bamileke,
                   child: Text('Bamiléké'),
                 ),
               ];
@@ -135,7 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.alphaFactor(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -181,7 +185,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF58CC02)),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF58CC02),
+                      ),
                     ),
                   ),
                   SizedBox(width: 8),
@@ -201,83 +207,94 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageBubble(ChatMessage message) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: message.isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        children: [
-          if (!message.isUser) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFF58CC02),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.smart_toy,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: message.isUser
-                    ? const Color(0xFF58CC02)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child:
+          Row(
+                mainAxisAlignment: message.isUser
+                    ? MainAxisAlignment.end
+                    : MainAxisAlignment.start,
                 children: [
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white : const Color(0xFF3C3C3C),
-                      fontSize: 16,
+                  if (!message.isUser) ...[
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF58CC02),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.smart_toy,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: message.isUser
+                            ? const Color(0xFF58CC02)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.alphaFactor(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            message.text,
+                            style: TextStyle(
+                              color: message.isUser
+                                  ? Colors.white
+                                  : const Color(0xFF3C3C3C),
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatTime(message.timestamp),
+                            style: TextStyle(
+                              color: message.isUser
+                                  ? Colors.white70
+                                  : Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(message.timestamp),
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white70 : Colors.grey,
-                      fontSize: 12,
+                  if (message.isUser) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ),
-            ),
-          ),
-          if (message.isUser) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ],
-        ],
-      ).animate().fadeIn(duration: 300.ms).slideX(begin: message.isUser ? 0.1 : -0.1),
+              )
+              .animate()
+              .fadeIn(duration: 300.ms)
+              .slideX(begin: message.isUser ? 0.1 : -0.1),
     );
   }
 
@@ -288,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.alphaFactor(0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -324,10 +341,7 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(25),
             ),
             child: IconButton(
-              icon: const Icon(
-                Icons.send,
-                color: Colors.white,
-              ),
+              icon: const Icon(Icons.send, color: Colors.white),
               onPressed: _isLoading ? null : _sendMessage,
             ),
           ),
@@ -336,13 +350,13 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  String _getLanguageName(Language language) {
+  String _getLanguageName(models.Language language) {
     switch (language) {
-      case Language.bulu:
+      case models.Language.bulu:
         return 'Bulu';
-      case Language.bassaa:
+      case models.Language.bassaa:
         return 'Bassaa';
-      case Language.bamileke:
+      case models.Language.bamileke:
         return 'Bamiléké';
     }
   }
@@ -350,7 +364,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inMinutes < 1) {
       return 'À l\'instant';
     } else if (difference.inHours < 1) {

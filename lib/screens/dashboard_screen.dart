@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/color_alpha.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
@@ -6,7 +8,6 @@ import '../models/language_data.dart';
 import '../widgets/skill_tree_widget.dart';
 import '../widgets/hearts_widget.dart';
 import '../widgets/xp_widget.dart';
-import '../widgets/streak_widget.dart';
 import 'lesson_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -71,8 +72,8 @@ class DashboardScreen extends StatelessWidget {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => LessonScreen(
-                          subject: subject,
-                          targetLanguage: userProvider.userProgress!.targetLanguage,
+                          subject: subject.name,
+                          targetLang: userProvider.userProgress!.targetLanguage,
                         ),
                       ),
                     );
@@ -94,7 +95,7 @@ class DashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.alphaFactor(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -106,7 +107,7 @@ class DashboardScreen extends StatelessWidget {
             radius: 30,
             backgroundColor: const Color(0xFF58CC02),
             child: Text(
-              userProvider.userProfile?['displayName']?.substring(0, 2).toUpperCase() ?? 'U',
+              _dashboardInitials(userProvider.userProfile?['displayName'] as String?),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -157,7 +158,7 @@ class DashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: Colors.orange.alphaFactor(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -207,14 +208,14 @@ class DashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF58CC02).withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFF58CC02).alphaFactor(0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF58CC02).withOpacity(0.1),
+              color: const Color(0xFF58CC02).alphaFactor(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -282,4 +283,11 @@ class DashboardScreen extends StatelessWidget {
         return 'Bamiléké';
     }
   }
+}
+
+String _dashboardInitials(String? name) {
+  if (name == null || name.trim().isEmpty) return 'U';
+  final t = name.trim();
+  if (t.length >= 2) return t.substring(0, 2).toUpperCase();
+  return t[0].toUpperCase();
 }

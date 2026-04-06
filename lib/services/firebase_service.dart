@@ -1,6 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/language_data.dart';
+
+Map<Subject, int> _initialCompletedLevels() => {
+      for (final s in Subject.values) s: 0,
+    };
 
 class FirebaseService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -10,12 +15,24 @@ class FirebaseService {
 
   static Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  static Future<UserCredential> signInWithEmail(String email, String password) async {
-    return await _auth.signInWithEmailAndPassword(email: email, password: password);
+  static Future<UserCredential> signInWithEmail(
+    String email,
+    String password,
+  ) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  static Future<UserCredential> signUpWithEmail(String email, String password) async {
-    return await _auth.createUserWithEmailAndPassword(email: email, password: password);
+  static Future<UserCredential> signUpWithEmail(
+    String email,
+    String password,
+  ) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
   static Future<void> signOut() async {
@@ -33,7 +50,7 @@ class FirebaseService {
           .doc(progress.userId)
           .set(progress.toJson());
     } catch (e) {
-      print('Error saving user progress: $e');
+      debugPrint('Error saving user progress: $e');
       rethrow;
     }
   }
@@ -44,63 +61,68 @@ class FirebaseService {
           .collection('user_progress')
           .doc(userId)
           .get();
-      
+
       if (doc.exists) {
-        return UserProgress.fromJson(doc.data()!);
+        final data = Map<String, dynamic>.from(doc.data()!);
+        final raw = data['lastLessonDate'];
+        if (raw is Timestamp) {
+          data['lastLessonDate'] = raw.toDate().toIso8601String();
+        }
+        if (data['userId'] == null || (data['userId'] as String).isEmpty) {
+          data['userId'] = userId;
+        }
+        return UserProgress.fromJson(data);
       }
       return null;
     } catch (e) {
-      print('Error getting user progress: $e');
+      debugPrint('Error getting user progress: $e');
       return null;
     }
   }
 
-  static Future<UserProgress> createInitialUserProgress(String userId) {
+  static Future<UserProgress> createInitialUserProgress(String userId) async {
     return UserProgress(
       userId: userId,
       sourceLanguage: Language.bulu,
       targetLanguage: Language.bulu,
-      completedLevels: {
-        Subject.alphabet: 0,
-        Subject.expression: 0,
-        Subject.number: 0,
-        Subject.conjugation: 0,
-        Subject.pronoun: 0,
-        Subject.article: 0,
-        Subject.phrase: 0,
-        Subject.famille: 0,
-        Subject.animaux: 0,
-      },
+      completedLevels: _initialCompletedLevels(),
       totalXP: 0,
       hearts: 5,
+      lastLessonDate: DateTime.now(),
       streak: 0,
     );
   }
 
+  /// Met l’XP totale à une valeur absolue (synchronisée avec le provider local).
+  static Future<void> updateXP(String userId, int totalXP) async {
+    try {
+      await _firestore.collection('user_progress').doc(userId).update({
+        'totalXP': totalXP,
+      });
+    } catch (e) {
+      debugPrint('Error updating user XP: $e');
+      rethrow;
+    }
+  }
+
   static Future<void> updateUserXP(String userId, int xpToAdd) async {
     try {
-      await _firestore
-          .collection('user_progress')
-          .doc(userId)
-          .update({
-            'totalXP': FieldValue.increment(xpToAdd),
-          });
+      await _firestore.collection('user_progress').doc(userId).update({
+        'totalXP': FieldValue.increment(xpToAdd),
+      });
     } catch (e) {
-      print('Error updating user XP: $e');
+      debugPrint('Error updating user XP: $e');
       rethrow;
     }
   }
 
   static Future<void> updateUserHearts(String userId, int hearts) async {
     try {
-      await _firestore
-          .collection('user_progress')
-          .doc(userId)
-          .update({
-            'hearts': hearts,
-          });
+      await _firestore.collection('user_progress').doc(userId).update({
+        'hearts': hearts,
+      });
     } catch (e) {
-      print('Error updating user hearts: $e');
+      debugPrint('Error updating user hearts: $e');
       rethrow;
     }
   }
@@ -111,29 +133,23 @@ class FirebaseService {
     int level,
   ) async {
     try {
-      await _firestore
-          .collection('user_progress')
-          .doc(userId)
-          .update({
-            'completedLevels.${subject.name}': level,
-          });
+      await _firestore.collection('user_progress').doc(userId).update({
+        'completedLevels.${subject.name}': level,
+      });
     } catch (e) {
-      print('Error updating subject level: $e');
+      debugPrint('Error updating subject level: $e');
       rethrow;
     }
   }
 
   static Future<void> updateStreak(String userId, int streak) async {
     try {
-      await _firestore
-          .collection('user_progress')
-          .doc(userId)
-          .update({
-            'streak': streak,
-            'lastLessonDate': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection('user_progress').doc(userId).update({
+        'streak': streak,
+        'lastLessonDate': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
-      print('Error updating streak: $e');
+      debugPrint('Error updating streak: $e');
       rethrow;
     }
   }
@@ -145,7 +161,7 @@ class FirebaseService {
           .orderBy('totalXP', descending: true)
           .limit(10)
           .get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return {
@@ -156,7 +172,7 @@ class FirebaseService {
         };
       }).toList();
     } catch (e) {
-      print('Error getting leaderboard: $e');
+      debugPrint('Error getting leaderboard: $e');
       return [];
     }
   }
@@ -168,31 +184,25 @@ class FirebaseService {
     required Language targetLanguage,
   }) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(userId)
-          .set({
-            'displayName': displayName,
-            'sourceLanguage': sourceLanguage.name,
-            'targetLanguage': targetLanguage.name,
-            'createdAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+      await _firestore.collection('users').doc(userId).set({
+        'displayName': displayName,
+        'sourceLanguage': sourceLanguage.name,
+        'targetLanguage': targetLanguage.name,
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     } catch (e) {
-      print('Error saving user profile: $e');
+      debugPrint('Error saving user profile: $e');
       rethrow;
     }
   }
 
   static Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
-      final doc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .get();
-      
+      final doc = await _firestore.collection('users').doc(userId).get();
+
       return doc.exists ? doc.data() : null;
     } catch (e) {
-      print('Error getting user profile: $e');
+      debugPrint('Error getting user profile: $e');
       return null;
     }
   }

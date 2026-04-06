@@ -9,6 +9,7 @@ class UserProvider with ChangeNotifier {
   Map<String, dynamic>? _userProfile;
   bool _isLoading = false;
 
+  // Getters pour accéder aux données depuis les écrans
   User? get user => _user;
   UserProgress? get userProgress => _userProgress;
   Map<String, dynamic>? get userProfile => _userProfile;
@@ -16,6 +17,7 @@ class UserProvider with ChangeNotifier {
   bool get isAuthenticated => _user != null;
 
   UserProvider() {
+    // Écoute les changements d'état de connexion (Login/Logout)
     _authStateListener();
   }
 
@@ -27,22 +29,21 @@ class UserProvider with ChangeNotifier {
       } else {
         _userProgress = null;
         _userProfile = null;
+        notifyListeners();
       }
-      notifyListeners();
     });
   }
 
+  // --- CHARGEMENT DES DONNÉES ---
+
   Future<void> _loadUserData() async {
     if (_user == null) return;
-    
     _setLoading(true);
     try {
-      await Future.wait([
-        _loadUserProgress(),
-        _loadUserProfile(),
-      ]);
+      // On charge le profil et la progression en parallèle pour aller plus vite
+      await Future.wait([_loadUserProgress(), _loadUserProfile()]);
     } catch (e) {
-      print('Error loading user data: $e');
+      debugPrint('Erreur lors du chargement des données utilisateur: $e');
     } finally {
       _setLoading(false);
     }
@@ -50,155 +51,135 @@ class UserProvider with ChangeNotifier {
 
   Future<void> _loadUserProgress() async {
     _userProgress = await FirebaseService.getUserProgress(_user!.uid);
-    
+    // Si l'utilisateur est nouveau, on lui crée un profil de progression par défaut
     if (_userProgress == null) {
-      _userProgress = await FirebaseService.createInitialUserProgress(_user!.uid);
+      _userProgress = UserProgress(
+        userId: _user!.uid,
+        sourceLanguage: Language.bulu, // Par défaut
+        targetLanguage: Language.bulu,
+        completedLevels: {
+          for (final s in Subject.values) s: 0,
+        },
+        totalXP: 0,
+        hearts: 5,
+        lastLessonDate: DateTime.now(),
+        streak: 0,
+      );
       await FirebaseService.saveUserProgress(_userProgress!);
     }
+    notifyListeners();
   }
 
   Future<void> _loadUserProfile() async {
     _userProfile = await FirebaseService.getUserProfile(_user!.uid);
+    notifyListeners();
   }
+
+  // --- AUTHENTIFICATION ---
 
   Future<void> signIn(String email, String password) async {
     _setLoading(true);
     try {
       await FirebaseService.signInWithEmail(email, password);
-    } catch (e) {
+    } finally {
       _setLoading(false);
-      rethrow;
     }
   }
 
   Future<void> signUp(String email, String password, String displayName) async {
     _setLoading(true);
     try {
-      final credential = await FirebaseService.signUpWithEmail(email, password);
-      
-      final progress = await FirebaseService.createInitialUserProgress(credential.user!.uid);
-      await FirebaseService.saveUserProgress(progress);
-      
-      await FirebaseService.saveUserProfile(
-        userId: credential.user!.uid,
-        displayName: displayName,
-        sourceLanguage: Language.bulu,
-        targetLanguage: Language.bulu,
-      );
-    } catch (e) {
+      UserCredential credential = await FirebaseService.signUpWithEmail(email, password);
+      if (credential.user != null) {
+        // Sauvegarde le nom dans Firestore
+        await FirebaseService.saveUserProfile(
+          userId: credential.user!.uid,
+          displayName: displayName,
+          sourceLanguage: Language.bulu, // Par défaut
+          targetLanguage: Language.bulu,
+        );
+      }
+    } finally {
       _setLoading(false);
-      rethrow;
     }
   }
 
   Future<void> signOut() async {
-    try {
-      await FirebaseService.signOut();
-    } catch (e) {
-      print('Error signing out: $e');
-    }
+    await FirebaseService.signOut();
   }
 
   Future<void> resetPassword(String email) async {
-    try {
-      await FirebaseService.resetPassword(email);
-    } catch (e) {
-      rethrow;
-    }
+    await FirebaseService.resetPassword(email);
   }
 
-  Future<void> addXP(int xp) async {
-    if (_userProgress == null || _user == null) return;
+  // --- LOGIQUE DE JEU (XP, Cœurs, Streak) ---
+
+  /// Ajoute de l'XP après une leçon réussie
+  Future<void> addXP(int amount) async {
+    if (_userProgress == null) return;
+
+    final newXP = _userProgress!.totalXP + amount;
+    _userProgress!.totalXP = newXP;
+    
+    notifyListeners();
     
     try {
-      await FirebaseService.updateUserXP(_user!.uid, xp);
-      _userProgress!.totalXP += xp;
-      notifyListeners();
+      await FirebaseService.updateXP(_user!.uid, newXP);
+      await _updateStreak(); // On vérifie aussi la série de jours
     } catch (e) {
-      print('Error adding XP: $e');
+      debugPrint('Erreur lors de la mise à jour de l\'XP: $e');
     }
   }
 
-  Future<void> updateHearts(int hearts) async {
-    if (_userProgress == null || _user == null) return;
+  /// Gère la série de jours consécutifs (Streak)
+  Future<void> _updateStreak() async {
+    if (_userProgress == null) return;
+
+    final now = DateTime.now();
+    final lastLesson = _userProgress!.lastLessonDate;
+    final difference = now.difference(lastLesson).inDays;
+
+    int newStreak = _userProgress!.streak;
+
+    if (difference == 1) {
+      // Jour consécutif : +1 à la flamme
+      newStreak++;
+    } else if (difference > 1) {
+      // Plus d'un jour d'absence : on repart à zéro
+      newStreak = 1; 
+    }
+
+    _userProgress!.streak = newStreak;
+    _userProgress!.lastLessonDate = now;
     
-    try {
-      await FirebaseService.updateUserHearts(_user!.uid, hearts);
-      _userProgress!.hearts = hearts;
-      notifyListeners();
-    } catch (e) {
-      print('Error updating hearts: $e');
-    }
+    await FirebaseService.saveUserProgress(_userProgress!);
+    notifyListeners();
   }
 
-  Future<void> completeSubjectLevel(Subject subject, int level) async {
-    if (_userProgress == null || _user == null) return;
-    
-    try {
-      final currentLevel = _userProgress!.completedLevels[subject] ?? 0;
-      if (level > currentLevel) {
-        await FirebaseService.updateSubjectLevel(_user!.uid, subject, level);
-        _userProgress!.completedLevels[subject] = level;
-        notifyListeners();
-      }
-    } catch (e) {
-      print('Error completing subject level: $e');
-    }
-  }
-
-  Future<void> updateStreak() async {
-    if (_userProgress == null || _user == null) return;
-    
-    try {
-      final now = DateTime.now();
-      final lastLesson = _userProgress!.lastLessonDate;
-      
-      int newStreak = 1;
-      
-      if (lastLesson != null) {
-        final difference = now.difference(lastLesson).inDays;
-        if (difference == 1) {
-          newStreak = (_userProgress!.streak) + 1;
-        } else if (difference > 1) {
-          newStreak = 1;
-        } else {
-          newStreak = _userProgress!.streak;
-        }
-      }
-      
-      await FirebaseService.updateStreak(_user!.uid, newStreak);
-      _userProgress!.streak = newStreak;
-      _userProgress!.lastLessonDate = now;
-      notifyListeners();
-    } catch (e) {
-      print('Error updating streak: $e');
-    }
-  }
-
+  /// Met à jour les préférences de langue (ex: passage du Bulu au Bassaa)
   Future<void> updateLanguagePreferences({
     required Language sourceLanguage,
     required Language targetLanguage,
   }) async {
     if (_user == null) return;
-    
+
     try {
       await FirebaseService.saveUserProfile(
         userId: _user!.uid,
-        displayName: _userProfile?['displayName'] ?? _user!.email?.split('@')[0] ?? 'User',
+        displayName: _userProfile?['displayName'] ?? 'Utilisateur',
         sourceLanguage: sourceLanguage,
         targetLanguage: targetLanguage,
       );
-      
+
       if (_userProgress != null) {
         _userProgress!.sourceLanguage = sourceLanguage;
         _userProgress!.targetLanguage = targetLanguage;
         await FirebaseService.saveUserProgress(_userProgress!);
       }
-      
-      await _loadUserProfile();
+
       notifyListeners();
     } catch (e) {
-      print('Error updating language preferences: $e');
+      debugPrint('Erreur lors du changement de langue: $e');
     }
   }
 

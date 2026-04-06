@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/color_alpha.dart';
 import '../models/language_data.dart';
 
 class QuestionWidget extends StatefulWidget {
@@ -33,7 +35,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.alphaFactor(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -47,7 +49,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _getQuestionTypeColor().withOpacity(0.1),
+                        color: _getQuestionTypeColor().alphaFactor(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -64,7 +66,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.alphaFactor(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -81,7 +83,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  widget.question.question,
+                  widget.question.questionText,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -107,21 +109,21 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 final isCorrect = option == widget.question.correctAnswer;
                 
                 Color backgroundColor = Colors.white;
-                Color borderColor = Colors.grey.withOpacity(0.3);
+                Color borderColor = Colors.grey.alphaFactor(0.3);
                 Color textColor = const Color(0xFF3C3C3C);
                 
                 if (_answerSelected) {
                   if (isSelected) {
-                    backgroundColor = isCorrect ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1);
+                    backgroundColor = isCorrect ? Colors.green.alphaFactor(0.1) : Colors.red.alphaFactor(0.1);
                     borderColor = isCorrect ? Colors.green : Colors.red;
                     textColor = isCorrect ? Colors.green : Colors.red;
                   } else if (isCorrect) {
-                    backgroundColor = Colors.green.withOpacity(0.1);
+                    backgroundColor = Colors.green.alphaFactor(0.1);
                     borderColor = Colors.green;
                     textColor = Colors.green;
                   }
                 } else if (isSelected) {
-                  backgroundColor = const Color(0xFF58CC02).withOpacity(0.1);
+                  backgroundColor = const Color(0xFF58CC02).alphaFactor(0.1);
                   borderColor = const Color(0xFF58CC02);
                   textColor = const Color(0xFF58CC02);
                 }
@@ -134,7 +136,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: borderColor.withOpacity(0.2),
+                        color: borderColor.alphaFactor(0.2),
                         blurRadius: isSelected || _answerSelected ? 8 : 4,
                         offset: const Offset(0, 2),
                       ),
@@ -182,28 +184,18 @@ class _QuestionWidgetState extends State<QuestionWidget> {
   }
 
   Color _getQuestionTypeColor() {
-    switch (widget.question.type) {
-      case QuestionType.recognition:
-        return Colors.blue;
-      case QuestionType.reverseTranslation:
-        return Colors.purple;
-      case QuestionType.phonetic:
-        return Colors.orange;
-      case QuestionType.matching:
-        return Colors.teal;
+    if (widget.question.phoneticHint != null &&
+        widget.question.phoneticHint!.trim().isNotEmpty) {
+      return Colors.orange;
     }
+    return const Color(0xFF58CC02);
   }
 
   String _getQuestionTypeLabel() {
-    switch (widget.question.type) {
-      case QuestionType.recognition:
-        return 'Reconnaissance';
-      case QuestionType.reverseTranslation:
-        return 'Traduction inversée';
-      case QuestionType.phonetic:
-        return 'Défi phonétique';
-      case QuestionType.matching:
-        return 'Association';
+    if (widget.question.phoneticHint != null &&
+        widget.question.phoneticHint!.trim().isNotEmpty) {
+      return 'Prononciation';
     }
+    return 'Vocabulaire';
   }
 }

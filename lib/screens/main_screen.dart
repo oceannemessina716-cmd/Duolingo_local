@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
-import '../models/language_data.dart';
+
+import '../utils/color_alpha.dart';
 import 'dashboard_screen.dart';
 import 'profile_screen.dart';
 import 'leaderboard_screen.dart';
@@ -26,8 +25,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
@@ -35,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.alphaFactor(0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
