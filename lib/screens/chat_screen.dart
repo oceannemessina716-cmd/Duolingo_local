@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../utils/color_alpha.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import '../services/gemini_service.dart';
 import '../models/language_data.dart' as models;
 
@@ -16,7 +18,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
-  models.Language _selectedLanguage = models.Language.bulu;
 
   @override
   void initState() {
@@ -57,9 +58,11 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.clear();
 
     try {
+      final user = Provider.of<UserProvider>(context, listen: false);
+      final lang = user.userProgress?.targetLanguage ?? models.Language.bulu;
       final response = await GeminiService.getLanguageHelp(
         query: message,
-        targetLanguage: _selectedLanguage,
+        targetLanguage: lang,
         sourceLanguage: 'fr',
       );
 
@@ -93,6 +96,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final targetLang = userProvider.userProgress?.targetLanguage ??
+        models.Language.bulu;
+    final sourceLang = userProvider.userProgress?.sourceLanguage ??
+        models.Language.bulu;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
@@ -105,10 +114,12 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           PopupMenuButton<models.Language>(
             icon: const Icon(Icons.language, color: Colors.white),
-            onSelected: (models.Language language) {
-              setState(() {
-                _selectedLanguage = language;
-              });
+            onSelected: (models.Language language) async {
+              final user = Provider.of<UserProvider>(context, listen: false);
+              await user.updateLanguagePreferences(
+                sourceLanguage: sourceLang,
+                targetLanguage: language,
+              );
             },
             itemBuilder: (BuildContext context) {
               return [
@@ -155,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Langue sélectionnée: ${_getLanguageName(_selectedLanguage)}',
+                    'Langue sélectionnée: ${_getLanguageName(targetLang)}',
                     style: const TextStyle(
                       color: Color(0xFF3C3C3C),
                       fontSize: 14,

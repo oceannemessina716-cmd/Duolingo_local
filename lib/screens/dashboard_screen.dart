@@ -62,7 +62,7 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildStreakSection(userProvider),
                 const SizedBox(height: 20),
-                _buildLanguageInfo(userProvider),
+                _buildLanguageInfo(context, userProvider),
                 const SizedBox(height: 30),
                 _buildSkillTreeTitle(),
                 const SizedBox(height: 20),
@@ -199,10 +199,10 @@ class DashboardScreen extends StatelessWidget {
     ).animate().fadeIn(duration: 800.ms).slideY(begin: 0.2);
   }
 
-  Widget _buildLanguageInfo(UserProvider userProvider) {
+  Widget _buildLanguageInfo(BuildContext context, UserProvider userProvider) {
     final targetLang = userProvider.userProgress?.targetLanguage ?? Language.bulu;
     final sourceLang = userProvider.userProgress?.sourceLanguage ?? Language.bulu;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -210,38 +210,69 @@ class DashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF58CC02).alphaFactor(0.3)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF58CC02).alphaFactor(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _getLanguageName(sourceLang),
-              style: const TextStyle(
-                color: Color(0xFF58CC02),
-                fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF58CC02).alphaFactor(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _getLanguageName(sourceLang),
+                  style: const TextStyle(
+                    color: Color(0xFF58CC02),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(Icons.arrow_forward, color: Color(0xFF58CC02)),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF58CC02),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _getLanguageName(targetLang),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Icon(Icons.arrow_forward, color: Color(0xFF58CC02)),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF58CC02),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _getLanguageName(targetLang),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Changer la langue apprise',
+            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<Language>(
+              value: targetLang,
+              isExpanded: true,
+              borderRadius: BorderRadius.circular(12),
+              items: Language.values.map((l) {
+                return DropdownMenuItem(
+                  value: l,
+                  child: Text(_getLanguageName(l)),
+                );
+              }).toList(),
+              onChanged: (v) async {
+                if (v == null) return;
+                await userProvider.updateLanguagePreferences(
+                  sourceLanguage: sourceLang,
+                  targetLanguage: v,
+                );
+              },
             ),
           ),
         ],

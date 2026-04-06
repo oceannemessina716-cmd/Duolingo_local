@@ -3,29 +3,50 @@ import 'package:flutter/services.dart';
 import '../models/language_data.dart';
 
 class LanguageService {
-  // Charge le JSON selon la langue choisie
+  static String _assetFileName(Language targetLang) {
+    switch (targetLang) {
+      case Language.bulu:
+        return 'bulu_data.json';
+      case Language.bassaa:
+        return 'bassaa_data.json';
+      case Language.bamileke:
+        return 'bamileke_data.json';
+    }
+  }
+
+  /// Charge le JSON selon la langue cible (même schéma que [bulu_data.json]).
   static Future<List<LanguageItem>> loadData(Language targetLang) async {
-    String fileName = targetLang == Language.bulu ? 'bulu_data.json' : 'bassaa_data.json';
+    final fileName = _assetFileName(targetLang);
     final String response = await rootBundle.loadString('assets/data/$fileName');
     final List<dynamic> data = json.decode(response);
     return data.map((json) => LanguageItem.fromJson(json)).toList();
   }
 
-  // Génère 10 questions pour une leçon
+  /// Génère jusqu’à 10 questions pour une leçon (moins si la catégorie est courte).
   static List<Question> generateQuiz(List<LanguageItem> allItems, String subject) {
-    List<LanguageItem> categoryItems = allItems.where((i) => i.subject == subject).toList();
-    categoryItems.shuffle();
-    
+    final categoryItems = allItems.where((i) => i.subject == subject).toList()..shuffle();
+    if (categoryItems.isEmpty) return [];
+
     return categoryItems.take(10).map((item) {
-      // On crée les mauvaises réponses (leurres)
-      List<String> distractors = allItems
+      final pool = allItems
           .where((i) => i.bu != item.bu)
           .map((i) => i.bu)
-          .toList();
-      distractors.shuffle();
+          .toList()
+        ..shuffle();
 
-      List<String> options = [item.bu, distractors[0], distractors[1], distractors[2]];
-      options.shuffle();
+      final wrong = <String>[];
+      final seen = <String>{item.bu};
+      for (final p in pool) {
+        if (wrong.length >= 3) break;
+        if (seen.add(p)) wrong.add(p);
+      }
+      var k = 0;
+      while (wrong.length < 3 && pool.isNotEmpty) {
+        wrong.add(pool[k % pool.length]);
+        k++;
+      }
+
+      final options = [item.bu, ...wrong.take(3)]..shuffle();
 
       return Question(
         id: item.id,

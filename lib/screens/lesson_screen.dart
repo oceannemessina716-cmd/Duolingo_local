@@ -34,6 +34,17 @@ class _LessonScreenState extends State<LessonScreen> {
     });
   }
 
+  String _languageLabel(Language lang) {
+    switch (lang) {
+      case Language.bulu:
+        return 'Bulu';
+      case Language.bassaa:
+        return 'Bassaa';
+      case Language.bamileke:
+        return 'Bamiléké';
+    }
+  }
+
   void _checkAnswer(String selected) {
     bool isCorrect = selected == _questions[_currentIndex].correctAnswer;
 
@@ -83,9 +94,29 @@ class _LessonScreenState extends State<LessonScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
+    if (_questions.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Leçon : ${widget.subject}')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Pas encore assez de données pour cette leçon (${_languageLabel(widget.targetLang)}).',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
+      );
+    }
+
     final q = _questions[_currentIndex];
+    final hint = q.phoneticHint?.trim();
     return Scaffold(
-      appBar: AppBar(title: Text("Leçon : ${widget.subject}"), actions: [Center(child: Text("❤️ $_hearts  "))]),
+      appBar: AppBar(
+        title: Text('${widget.subject} · ${_languageLabel(widget.targetLang)}'),
+        actions: [Center(child: Text("❤️ $_hearts  "))],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -93,7 +124,8 @@ class _LessonScreenState extends State<LessonScreen> {
             LinearProgressIndicator(value: (_currentIndex + 1) / _questions.length),
             const SizedBox(height: 40),
             Text(q.questionText, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            Text("Phonétique : ${q.phoneticHint}", style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
+            if (hint != null && hint.isNotEmpty)
+              Text('Phonétique : $hint', style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
             const SizedBox(height: 30),
             ...q.options.map((opt) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
